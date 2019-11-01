@@ -108,9 +108,14 @@ function run_and_verify
 
 	# Verify all the expected events appear in the log.
 	for event in ${events[*]}; do
-
-		# Verify the event is in in the short output.
-		log_must grep -q "$event" $TMP_EVENTS
+		# Verify the event is in the short output. If it isn't a
+		# config_sync or history_event, verify it is present only once.
+		if [[ "$event" != sysevent.fs.zfs.config_sync &&
+		      "$event" != sysevent.fs.zfs.history_event ]]; then
+			log_must eval "test $(grep -c $event $TMP_EVENTS) -eq 1"
+		else
+			log_must grep -q "$event" $TMP_EVENTS
+		fi
 
 		# Verify the event is in the verbose output with pool name.
 		awk -v event="$event" \
