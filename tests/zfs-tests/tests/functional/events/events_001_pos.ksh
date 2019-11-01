@@ -116,7 +116,7 @@ run_and_verify -p "$MPOOL" \
     -e "sysevent.fs.zfs.config_sync" \
     "zpool detach $MPOOL $VDEV4"
 
-# Replace a device
+# Replace an online device.
 run_and_verify -p "$MPOOL" -d 10 \
     -e "sysevent.fs.zfs.vdev_attach" \
     -e "sysevent.fs.zfs.resilver_start" \
@@ -125,6 +125,20 @@ run_and_verify -p "$MPOOL" -d 10 \
     -e "sysevent.fs.zfs.history_event" \
     -e "sysevent.fs.zfs.config_sync" \
     "zpool replace -f $MPOOL $VDEV1 $VDEV4"
+
+# Replace an offline device.
+run_and_verify -p "$MPOOL" \
+    -e "resource.fs.zfs.statechange" \
+    -e "sysevent.fs.zfs.config_sync" \
+    "zpool offline $MPOOL $VDEV4"
+run_and_verify -p "$MPOOL" -d 10 \
+    -e "sysevent.fs.zfs.vdev_attach" \
+    -e "sysevent.fs.zfs.resilver_start" \
+    -e "sysevent.fs.zfs.resilver_finish" \
+    -e "sysevent.fs.zfs.vdev_remove" \
+    -e "sysevent.fs.zfs.history_event" \
+    -e "sysevent.fs.zfs.config_sync" \
+    "zpool replace -f $MPOOL $VDEV4 $VDEV1"
 
 # Scrub a pool.
 run_and_verify -p "$MPOOL" -d 10 \
